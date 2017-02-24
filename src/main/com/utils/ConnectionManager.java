@@ -1,46 +1,49 @@
 package main.com.utils;
+
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
-import com.mongodb.DB;
-import com.mongodb.MongoException;
-import com.mongodb.WriteConcern;
-
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
 import com.mongodb.DBCursor;
-
+import com.mongodb.DBObject;
+import com.mongodb.util.JSON;
 
 public class ConnectionManager {
-	
 
-		   public static void main( String args[] ) {
-			
-		      try{
+	public Map<String, String> GetMappedStatusFromVR() {
+		String status = "empty";
+		String room = "Pushya";
+		String occupancy = "RoomOccupancyStatus";
+		String roomName = "RoomName";
+		DBCursor dbCursor = null;
+		List<DBObject> dbObjectList = null;
+		Map<String, String> statusMap=new HashMap<String, String>();
+		try {
+
+			DBCollection collection = MongoUtils.getCollection();
+			DBObject query = BasicDBObjectBuilder.start().get();
+					dbCursor = collection.find(query);
+					dbObjectList = dbCursor.toArray();
+			 for (Iterator iterator = dbObjectList.iterator(); iterator
+					.hasNext();) {
+				DBObject dbObject = (DBObject) iterator.next();
+				status = (dbObject.get(occupancy)).toString();
+				room= (dbObject.get(roomName)).toString();
+				statusMap.put(room, status);
 				
-		         // To connect to mongodb server
-		         MongoClient mongoClient = new MongoClient( "localhost" , 27017 );
-					
-		         // Now connect to your databases
-		         DB db = mongoClient.getDB( "test" );
-		         System.out.println("Connect to database successfully");
-		        /* boolean auth = db.authenticate(myUserName, myPassword);
-		         System.out.println("Authentication: "+auth);*/
-		         
-		         DBCollection coll = db.getCollection("mycollection");
-		         System.out.println("Collection mycol selected successfully");
-					
-		         DBCursor cursor = coll.find();
-		         int i = 1;
-					
-		         while (cursor.hasNext()) { 
-		            System.out.println("Inserted Document: "+i); 
-		            System.out.println(cursor.next()); 
-		            i++;
-		         }
-					
-		      }catch(Exception e){
-		         System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-		      }
-		   }
+			}
+			 System.out.println(statusMap);
+
+		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 		}
+		return statusMap;
+	}
 	
+	
+}
