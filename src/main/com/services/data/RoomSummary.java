@@ -10,6 +10,10 @@ public class RoomSummary {
 	public void addRoomStatus(RoomStatus roomStatus){
 		roomAvailability.add(roomStatus);
 	}
+	
+	public void addRoomStatus(String roomName, String roomStatus){
+		roomAvailability.add(new RoomStatus(roomName, roomStatus));
+	}
 
 	public List<RoomStatus> getRoomAvailability() {
 		return roomAvailability;
