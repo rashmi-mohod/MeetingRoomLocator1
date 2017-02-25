@@ -8,7 +8,6 @@ import java.util.Properties;
 import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.NoSuchProviderException;
 import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
@@ -18,7 +17,7 @@ import javax.mail.internet.MimeMessage;
 
 public class MailSender {
 
-	   public static void sendMail() throws MessagingException, MalformedURLException {    
+	   public static void sendMail(String roomName, String nodeServer) throws MessagingException, MalformedURLException {    
 		    
    		    String mailTo = "admin@semicolon2017.com";
 		    String subject = "Meeting Cancelation Request";
@@ -26,8 +25,8 @@ public class MailSender {
 	        String port = "587";
 	        // message contains HTML markups
 	        String message = "<i>Greetings!</i><br>";
-	        message += "If you dont want to use the Meeting Room booked by you, Please cancel it by using following link<br>";
-	        message += " <b>Cancellation Link :</b> "+new URL("http://www.google.com");
+	        message += "Currently you have booking to room "+roomName+". If you are not using, Please cancel it.<br>";
+	        message += " <b>Cancellation Link :</b> "+new URL("http://"+nodeServer+":3001/deleteRoom?roomName="+roomName);
 	        
 		    final String mailFrom ="watsonatsemicolon@gmail.com";
 		    final  String password ="semicolon@123";

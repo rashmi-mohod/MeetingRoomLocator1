@@ -3,6 +3,7 @@ package main.com.services;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,20 +12,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.mail.MessagingException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import main.com.services.data.RoomConstants;
 import main.com.services.data.RoomStatus;
 import main.com.services.data.RoomSummary;
-import main.com.utils.ConnectionManager;
+import main.com.utils.MailSender;
+import main.com.utils.SmsSender;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -42,47 +43,8 @@ public class RoomLocatorService {
 	private static Map<String, Date> bookedEmptyRooms = new HashMap<String, Date>();
 	private static int idleRoomSeconds = 120;
 	private final String USER_AGENT = "Mozilla/5.0";
-	
-	@GET
-	@Path("/Meeting")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public String getAllGalaxies(@HeaderParam("uid") String uid) {
-		
-		return "{message:\"This response is from server\"}";
-	}
-	
-    @POST
-    @Path("/Availablity")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getAvailablity(JsonObject uid) {
-        System.out.println("Uid is:"+uid);
-        final Gson gson = new Gson();
-        List<RoomStatus> list = new ArrayList<RoomStatus>();
-        list.add(new RoomStatus(RoomConstants.PUSHYA, "Booked"));
-        list.add(new RoomStatus(RoomConstants.ANURADHA, "Booked"));
-        list.add(new RoomStatus(RoomConstants.KRITIKA, "Available"));
-        final String gsonStr = gson.toJson(list);
-        
-        ResponseBuilder response = Response.ok(gsonStr).status(200);
-        return response.build(); 
-    	
-    
-    }
-    
-    @GET
-    @Path("/RoomStatus")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Map<String, String> getStatus(@HeaderParam("roomName") String RoomName) {
-        //For MongoDb Connection And status
-    	ConnectionManager conman= new ConnectionManager();
-    	Map<String, String> VRStatus= new HashMap<String, String>();
-		VRStatus = conman.GetMappedStatusFromVR();
-		System.out.println(VRStatus);
-        return VRStatus;
-    }
+	private final String NODE_SERVER = "10.222.120.28";
+
     
     @GET
     @Path("/AdhocStatus")
@@ -105,11 +67,11 @@ public class RoomLocatorService {
 			System.out.println("Exception:"+e.getMessage());
 			e.printStackTrace();
 	        List<RoomStatus> list = new ArrayList<RoomStatus>();
-	        list.add(new RoomStatus(RoomConstants.PUSHYA, getRandomStatus(RoomConstants.PUSHYA)));
-	        list.add(new RoomStatus(RoomConstants.ANURADHA, getRandomStatus(RoomConstants.ANURADHA)));
-	        list.add(new RoomStatus(RoomConstants.KRITIKA, RoomStatus.AE));
-	        list.add(new RoomStatus(RoomConstants.MARS,RoomStatus. BO));
-	        list.add(new RoomStatus(RoomConstants.ROHINI, RoomStatus.BE));
+//	        list.add(new RoomStatus(RoomConstants.PUSHYA, getRandomStatus(RoomConstants.PUSHYA)));
+//	        list.add(new RoomStatus(RoomConstants.ANURADHA, getRandomStatus(RoomConstants.ANURADHA)));
+//	        list.add(new RoomStatus(RoomConstants.KRITIKA, RoomStatus.AE));
+//	        list.add(new RoomStatus(RoomConstants.MARS,RoomStatus. BO));
+//	        list.add(new RoomStatus(RoomConstants.ROHINI, RoomStatus.BE));
 	        
 	        roomSummary.setRoomAvailability(list);
 		}
@@ -152,16 +114,22 @@ public class RoomLocatorService {
 			Date emptySinceDate = bookedEmptyRooms.get(roomName);
 			if(emptySinceDate.getTime()+idleRoomSeconds*1000<now.getTime()){
 				System.out.println("Eligible for cancelling the booking");
+				bookedEmptyRooms.remove(roomName);
+				try {
+					MailSender.sendMail(roomName, NODE_SERVER);
+					SmsSender.sendSMS(roomName);
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (MessagingException e) {
+					e.printStackTrace();
+				}
 			}
+		} else {
+			bookedEmptyRooms.put(roomName, now);
 		}
-		bookedEmptyRooms.put(roomName, now);
+		System.out.println(bookedEmptyRooms);
 	}
 
-	private String getRandomStatus(String pushya) {
-		int random = (int) (Math.random()*4);
-		return ((random<2)?RoomStatus.AE:((random<3)?RoomStatus.AO:RoomStatus.BO));
-	}
-	
 	private String sendPostGoogleAPI() throws Exception {
 
 		OkHttpClient client = new OkHttpClient();
@@ -173,7 +141,7 @@ public class RoomLocatorService {
 		okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
 		RequestBody body = RequestBody.create(mediaType, "{\n\"startDateTime\":\""+startDate+"\",\n\"endDateTime\":\""+endDate+"\"\n}");
 		Request request = new Request.Builder()
-		  .url("http://10.222.120.163:3001/getAllRoomsStatus")//ngpr16:3001/getAllRoomsStatus")
+		  .url("http://"+NODE_SERVER+":3001/getAllRoomsStatus")//ngpr16:3001/getAllRoomsStatus")
 		  .post(body)
 		  .addHeader("content-type", "application/json")
 		  .addHeader("cache-control", "no-cache")
@@ -246,4 +214,61 @@ public class RoomLocatorService {
 		}
 		return map;
 	}
+/*	
+	public static void main(String[] args) throws InterruptedException {
+		RoomLocatorService service = new RoomLocatorService();
+		for (int i = 0; i < 10; i++) {
+			service.manipulatedStatus("Booked", "empty", "A");
+			service.manipulatedStatus("Booked", "empty", "B");
+			Thread.sleep(1000);
+		}
+		
+	}*/
+
+	/*
+	@GET
+	@Path("/Meeting")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public String getAllGalaxies(@HeaderParam("uid") String uid) {
+		
+		return "{message:\"This response is from server\"}";
+	}
+	
+    @POST
+    @Path("/Availablity")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getAvailablity(JsonObject uid) {
+        System.out.println("Uid is:"+uid);
+        final Gson gson = new Gson();
+        List<RoomStatus> list = new ArrayList<RoomStatus>();
+        list.add(new RoomStatus(RoomConstants.PUSHYA, "Booked"));
+        list.add(new RoomStatus(RoomConstants.ANURADHA, "Booked"));
+        list.add(new RoomStatus(RoomConstants.KRITIKA, "Available"));
+        final String gsonStr = gson.toJson(list);
+        
+        ResponseBuilder response = Response.ok(gsonStr).status(200);
+        return response.build(); 
+    	
+    
+    }
+    
+    	private String getRandomStatus(String pushya) {
+		int random = (int) (Math.random()*4);
+		return ((random<2)?RoomStatus.AE:((random<3)?RoomStatus.AO:(random<1?RoomStatus.BE:RoomStatus.BO)));
+	}
+    
+    @GET
+    @Path("/RoomStatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, String> getStatus(@HeaderParam("roomName") String RoomName) {
+        //For MongoDb Connection And status
+    	ConnectionManager conman= new ConnectionManager();
+    	Map<String, String> VRStatus= new HashMap<String, String>();
+		VRStatus = conman.GetMappedStatusFromVR();
+		System.out.println(VRStatus);
+        return VRStatus;
+    }*/
 }
