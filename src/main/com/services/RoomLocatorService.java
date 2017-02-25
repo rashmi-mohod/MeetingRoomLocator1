@@ -21,17 +21,14 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.ResponseBody;
-
-import org.codehaus.jackson.annotate.JsonRawValue;
-
 import main.com.services.data.RoomConstants;
 import main.com.services.data.RoomStatus;
 import main.com.services.data.RoomSummary;
 import main.com.utils.ConnectionManager;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.ResponseBody;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -42,7 +39,9 @@ import com.google.gson.JsonParser;
 @Path("/Room")
 public class RoomLocatorService {
 	
-
+	private static Map<String, Date> bookedEmptyRooms = new HashMap<String, Date>();
+	private static int idleRoomSeconds = 120;
+	
 	@GET
 	@Path("/Meeting")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -99,7 +98,7 @@ public class RoomLocatorService {
 			String responseJson = sendPostGoogleAPI();
 			List<RoomStatus> listRoomStatus = parseJsonResponseFromGoogleAPI(responseJson);
 			for (RoomStatus roomStatus : listRoomStatus) {
-				roomSummary.addRoomStatus(roomStatus.getRoomName(), manipulatedStatus(roomStatus.getRoomStatus(), occupancyMap.get(roomStatus.getRoomName())));
+				roomSummary.addRoomStatus(roomStatus.getRoomName(), manipulatedStatus(roomStatus.getRoomStatus(), occupancyMap.get(roomStatus.getRoomName()),roomStatus.getRoomName()));
 			}
 		} catch (Exception e) {
 			System.out.println("Exception:"+e.getMessage());
@@ -120,7 +119,7 @@ public class RoomLocatorService {
         return response.build(); 
     }
 
-	private String manipulatedStatus(String bookingStatus, String occupancy) {
+	private String manipulatedStatus(String bookingStatus, String occupancy, String roomName) {
 		if(bookingStatus.equalsIgnoreCase("available")){
 			if(occupancy.equalsIgnoreCase("empty")){
 				return RoomStatus.AE;
@@ -129,12 +128,29 @@ public class RoomLocatorService {
 			}
 		} else {
 			if(occupancy.equalsIgnoreCase("empty")){
+				markForBookedButEmpty(roomName);
 				return RoomStatus.BE;
 			} else {
+				unMarkForCancellation(roomName);
 				return RoomStatus.BO;
 			}
 			
 		}
+	}
+
+	private void unMarkForCancellation(String roomName) {
+		bookedEmptyRooms.remove(roomName);
+	}
+
+	private void markForBookedButEmpty(String roomName) {
+		Date now = new Date();
+		if(bookedEmptyRooms.containsKey(roomName)){
+			Date emptySinceDate = bookedEmptyRooms.get(roomName);
+			if(emptySinceDate.getTime()+idleRoomSeconds*1000<now.getTime()){
+				System.out.println("Eligible for cancelling the booking");
+			}
+		}
+		bookedEmptyRooms.put(roomName, now);
 	}
 
 	private String getRandomStatus(String pushya) {
