@@ -186,34 +186,6 @@ public class RoomLocatorService {
 		return responseJson;
 	}
 	
-	private String sendPostOccupiAPI() throws Exception {
-
-		OkHttpClient client = new OkHttpClient();
-		
-		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		String startDate = simpleDateFormat.format(new Date())+"+05:30";
-		String endDate = simpleDateFormat.format(new Date(new Date().getTime()+300000))+"+05:30";
-
-		okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
-		RequestBody body = RequestBody.create(mediaType, "{\n\"startDateTime\":\""+startDate+"\",\n\"endDateTime\":\""+endDate+"\"\n}");
-		Request request = new Request.Builder()
-		  .url("http://localhost:8080/Semicolon_Project/rest/imageClassification/classify")
-		  .post(body)
-		  .addHeader("content-type", "application/json")
-		  .addHeader("cache-control", "no-cache")
-		  .addHeader("postman-token", "2738f157-b458-ade3-216e-dabd91664a56")
-		  .build();
-
-		okhttp3.Response response = client.newCall(request).execute();
-
-
-		//print result
-		ResponseBody responseBody = response.body();
-		String responseJson = responseBody.source().readUtf8();
-		
-		return responseJson;
-	}
-	
 	private List<RoomStatus> parseJsonResponseFromGoogleAPI(String jsonStr) {
 		List<RoomStatus> list = new ArrayList<RoomStatus>();
 		JsonElement jsonElement = new JsonParser().parse(jsonStr);
@@ -240,8 +212,6 @@ public class RoomLocatorService {
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
 		con.setRequestMethod("Get");
-
-		int responseCode = con.getResponseCode();
 
 		BufferedReader in = new BufferedReader(
 		        new InputStreamReader(con.getInputStream()));
