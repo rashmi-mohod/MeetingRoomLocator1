@@ -14,11 +14,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import com.google.gson.Gson;
-
 import main.com.services.data.RoomConstants;
 import main.com.services.data.RoomStatus;
+import main.com.services.data.RoomSummary;
 import main.com.utils.ConnectionManager;
+
+import com.google.gson.Gson;
 
 @Path("/Room")
 public class RoomLocatorService {
@@ -85,7 +86,10 @@ public class RoomLocatorService {
         list.add(new RoomStatus(RoomConstants.KRITIKA, RoomStatus.BE));
         list.add(new RoomStatus(RoomConstants.MARS,RoomStatus. BO));
         list.add(new RoomStatus(RoomConstants.ROHINI, RoomStatus.BE));
-        final String gsonStr = gson.toJson(list);
+        
+        RoomSummary roomSummary = new RoomSummary();
+        roomSummary.setRoomAvailability(list);
+        final String gsonStr = gson.toJson(roomSummary);
         
         ResponseBuilder response = Response.ok(gsonStr).status(200);
         return response.build(); 

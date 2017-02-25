@@ -2,7 +2,7 @@
     <wb-module deploy-name="MeetingRoomLocator">
         <wb-resource deploy-path="/" source-path="/WebContent" tag="defaultRootSource"/>
         <wb-resource deploy-path="/WEB-INF/classes" source-path="/src"/>
-        <property name="context-root" value="MeetingRoomLocator"/>
         <property name="java-output-path" value="/MeetingRoomLocator/build/classes"/>
+        <property name="context-root" value="MeetingRoomLocator"/>
     </wb-module>
 </project-modules>
