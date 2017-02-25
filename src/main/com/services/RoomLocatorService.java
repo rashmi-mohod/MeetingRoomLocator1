@@ -16,11 +16,14 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 
 import com.google.gson.Gson;
 
+import main.com.services.data.RoomConstants;
+import main.com.services.data.RoomStatus;
 import main.com.utils.ConnectionManager;
 
 @Path("/Room")
 public class RoomLocatorService {
 	
+
 	@GET
 	@Path("/Meeting")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -38,9 +41,9 @@ public class RoomLocatorService {
         
         final Gson gson = new Gson();
         List<RoomStatus> list = new ArrayList<RoomStatus>();
-        list.add(new RoomStatus("Pushya", "Booked"));
-        list.add(new RoomStatus("Anuradha", "Booked"));
-        list.add(new RoomStatus("Kritika", "Available"));
+        list.add(new RoomStatus(RoomConstants.PUSHYA, "Booked"));
+        list.add(new RoomStatus(RoomConstants.ANURADHA, "Booked"));
+        list.add(new RoomStatus(RoomConstants.KRITIKA, "Available"));
         final String gsonStr = gson.toJson(list);
         
         ResponseBuilder response = Response.ok(gsonStr).status(200);
@@ -77,11 +80,11 @@ public class RoomLocatorService {
         final Gson gson = new Gson();
         
         List<RoomStatus> list = new ArrayList<RoomStatus>();
-        list.add(new RoomStatus("Pushya", "AO"));
-        list.add(new RoomStatus("Anuradha", "AE"));
-        list.add(new RoomStatus("Kritika", "BE"));
-        list.add(new RoomStatus("Mars", "BE"));
-        list.add(new RoomStatus("Rohini", "BE"));
+        list.add(new RoomStatus(RoomConstants.PUSHYA, RoomStatus.AO));
+        list.add(new RoomStatus(RoomConstants.ANURADHA, RoomStatus.AE));
+        list.add(new RoomStatus(RoomConstants.KRITIKA, RoomStatus.BE));
+        list.add(new RoomStatus(RoomConstants.MARS,RoomStatus. BO));
+        list.add(new RoomStatus(RoomConstants.ROHINI, RoomStatus.BE));
         final String gsonStr = gson.toJson(list);
         
         ResponseBuilder response = Response.ok(gsonStr).status(200);
