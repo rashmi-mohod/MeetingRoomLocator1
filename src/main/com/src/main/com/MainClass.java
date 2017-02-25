@@ -7,7 +7,9 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import main.com.services.data.RoomStatus;
 import okhttp3.MediaType;
@@ -25,7 +27,7 @@ import com.google.gson.JsonParser;
 public class MainClass {
 
 	private final String USER_AGENT = "Mozilla/5.0";
-	private final String GET_URL = "http://10.222.120.147:8080/Semicolon_Project/rest/imageClassification/classify";
+	private final String GET_URL = "http://10.222.120.147:8080/Semicolon_Project/rest/image_classification/occupancy_status";
 	private final String POST_URL = "http://10.222.120.165:3001/getAllRoomsStatus";
 	private final String GET_METHOD = "GET";
 	private final String POST_METHOD = "POST";
@@ -37,7 +39,7 @@ public class MainClass {
 		System.out.println(VRStatus);*/
 		MainClass http = new MainClass();
 		try {
-	//		http.sendGet();
+			http.parseJsonResponseOccupancy(http.sendGet());
 			System.out.println("\nTesting 2 - Send Http POST request");
 			//http.sendPost();
 			String jsonStr = "{  \"statusCode\": 200,  \"status\": true,  \"result\": {    \"kind\": \"calendar#freeBusy\",    \"timeMin\": \"2017-02-24T20:00:00.000Z\",    \"timeMax\": \"2017-02-25T17:25:00.000Z\",    \"roomStatus\": [      {        \"roomName\": \"Pushya\",        \"roomStatus\": \"Available\",        \"bookings\": {          \"busy\": []        }      },      {        \"roomName\": \"Anuradha\",        \"roomStatus\": \"Booked\",        \"bookings\": {          \"busy\": [            {              \"start\": \"2017-02-25T02:00:00+05:30\",              \"end\": \"2017-02-25T02:30:00+05:30\"            },            {              \"start\": \"2017-02-25T12:00:00+05:30\",              \"end\": \"2017-02-25T12:30:00+05:30\"            }          ]        }      },      {        \"roomName\": \"Kritika\",        \"roomStatus\": \"Available\",        \"bookings\": {          \"busy\": []        }      },      {        \"roomName\": \"Rohini\",        \"roomStatus\": \"Available\",        \"bookings\": {          \"busy\": []        }      },      {        \"roomName\": \"Mars\",        \"roomStatus\": \"Available\",        \"bookings\": {          \"busy\": []        }      }    ]  }}";
@@ -66,7 +68,7 @@ public class MainClass {
 			JsonArray resultArray = jsonElementStatus.getAsJsonArray();
 			for (JsonElement roomStatusElement : resultArray) {
 				JsonObject roomStatusObj = roomStatusElement.getAsJsonObject();
-				RoomStatus roomStatus = new RoomStatus(roomStatusObj.get("roomName").toString(), roomStatusObj.get("roomStatus").toString());
+				RoomStatus roomStatus = new RoomStatus(roomStatusObj.get("roomName").getAsString(), roomStatusObj.get("roomStatus").getAsString());
 				list.add(roomStatus);
 			}
 		}
@@ -74,7 +76,7 @@ public class MainClass {
 	}
 
 		// HTTP GET request
-		private void sendGet() throws Exception {
+		private String sendGet() throws Exception {
 				String url = GET_URL;
 
 				URL obj = new URL(url);
@@ -101,7 +103,7 @@ public class MainClass {
 
 				//print result
 				System.out.println(response.toString());
-
+return response.toString();
 			}
 
 			// HTTP POST request
@@ -179,6 +181,20 @@ public class MainClass {
 			return responseJson;
 		}
 
+		private Map<String, String> parseJsonResponseOccupancy(String jsonStr) {
+			Map<String, String> map = new HashMap<String, String>();
+			JsonElement jsonElement = new JsonParser().parse(jsonStr);
+			JsonObject jsonObject = jsonElement.getAsJsonObject();
+			JsonElement jsonStatus = jsonObject.get("status");
+			if(jsonStatus.isJsonArray()){
+				JsonArray resultArray = jsonStatus.getAsJsonArray();
+				for (JsonElement roomStatusElement : resultArray) {
+					JsonObject roomStatusObj = roomStatusElement.getAsJsonObject();
+					map.put(roomStatusObj.get("RoomName").getAsString(), roomStatusObj.get("RoomOccupancyStatus").getAsString());
+				}
+			}
+			return map;
+		}
 
 			
 	}

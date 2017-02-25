@@ -41,6 +41,7 @@ public class RoomLocatorService {
 	
 	private static Map<String, Date> bookedEmptyRooms = new HashMap<String, Date>();
 	private static int idleRoomSeconds = 120;
+	private final String USER_AGENT = "Mozilla/5.0";
 	
 	@GET
 	@Path("/Meeting")
@@ -102,6 +103,7 @@ public class RoomLocatorService {
 			}
 		} catch (Exception e) {
 			System.out.println("Exception:"+e.getMessage());
+			e.printStackTrace();
 	        List<RoomStatus> list = new ArrayList<RoomStatus>();
 	        list.add(new RoomStatus(RoomConstants.PUSHYA, getRandomStatus(RoomConstants.PUSHYA)));
 	        list.add(new RoomStatus(RoomConstants.ANURADHA, getRandomStatus(RoomConstants.ANURADHA)));
@@ -122,8 +124,10 @@ public class RoomLocatorService {
 	private String manipulatedStatus(String bookingStatus, String occupancy, String roomName) {
 		if(bookingStatus.equalsIgnoreCase("available")){
 			if(occupancy.equalsIgnoreCase("empty")){
+				unMarkForCancellation(roomName);
 				return RoomStatus.AE;
 			} else {
+				unMarkForCancellation(roomName);
 				return RoomStatus.AO;
 			}
 		} else {
@@ -163,8 +167,8 @@ public class RoomLocatorService {
 		OkHttpClient client = new OkHttpClient();
 		
 		SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		String startDate = simpleDateFormat.format(new Date())+"+5:30";
-		String endDate = simpleDateFormat.format(new Date(new Date().getTime()+300000))+"+5:30";
+		String startDate = simpleDateFormat.format(new Date())+"+05:30";
+		String endDate = simpleDateFormat.format(new Date(new Date().getTime()+300000))+"+05:30";
 
 		okhttp3.MediaType mediaType = okhttp3.MediaType.parse("application/json");
 		RequestBody body = RequestBody.create(mediaType, "{\n\"startDateTime\":\""+startDate+"\",\n\"endDateTime\":\""+endDate+"\"\n}");
@@ -196,7 +200,7 @@ public class RoomLocatorService {
 			JsonArray resultArray = jsonElementStatus.getAsJsonArray();
 			for (JsonElement roomStatusElement : resultArray) {
 				JsonObject roomStatusObj = roomStatusElement.getAsJsonObject();
-				RoomStatus roomStatus = new RoomStatus(roomStatusObj.get("roomName").toString(), roomStatusObj.get("roomStatus").toString());
+				RoomStatus roomStatus = new RoomStatus(roomStatusObj.get("roomName").getAsString(), roomStatusObj.get("roomStatus").getAsString());
 				list.add(roomStatus);
 			}
 		}
@@ -211,7 +215,9 @@ public class RoomLocatorService {
 		URL obj = new URL(url);
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 
-		con.setRequestMethod("Get");
+		con.setRequestMethod("GET");
+		con.setRequestProperty("User-Agent", USER_AGENT);
+
 
 		BufferedReader in = new BufferedReader(
 		        new InputStreamReader(con.getInputStream()));
@@ -230,12 +236,12 @@ public class RoomLocatorService {
 		Map<String, String> map = new HashMap<String, String>();
 		JsonElement jsonElement = new JsonParser().parse(jsonStr);
 		JsonObject jsonObject = jsonElement.getAsJsonObject();
-		JsonObject jsonResult = jsonObject.get("status").getAsJsonObject();
+		JsonElement jsonResult = jsonObject.get("status");
 		if(jsonResult.isJsonArray()){
 			JsonArray resultArray = jsonResult.getAsJsonArray();
 			for (JsonElement roomStatusElement : resultArray) {
 				JsonObject roomStatusObj = roomStatusElement.getAsJsonObject();
-				map.put(roomStatusObj.get("RoomName").toString(), roomStatusObj.get("RoomOccupancyStatus").toString());
+				map.put(roomStatusObj.get("RoomName").getAsString(), roomStatusObj.get("RoomOccupancyStatus").getAsString());
 			}
 		}
 		return map;
