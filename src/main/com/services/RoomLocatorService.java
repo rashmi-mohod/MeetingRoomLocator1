@@ -204,7 +204,7 @@ public class RoomLocatorService {
 	}
 	
 	private final String GET_URL = "http://10.222.120.147:8080/Semicolon_Project/rest/image_classification/occupancy_status";
-
+//Get occupancy for rooms
 	private String getRoomOccupancyJson() throws Exception {
 		String url = GET_URL;
 
