@@ -67,7 +67,14 @@ public class RoomLocatorService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAdhocStatus(@HeaderParam("roomName") String RoomName) {
+    	
+    	// Make a call to mongoDB
+    	
+    	// Make a call to Node URL
+    	
+    	
         final Gson gson = new Gson();
+        
         List<RoomStatus> list = new ArrayList<RoomStatus>();
         list.add(new RoomStatus("Pushya", "AO"));
         list.add(new RoomStatus("Anuradha", "AE"));
