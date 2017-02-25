@@ -73,6 +73,7 @@ public class RoomLocatorService {
     	// Make a call to Node URL
     	
     	
+    	
         final Gson gson = new Gson();
         
         List<RoomStatus> list = new ArrayList<RoomStatus>();
